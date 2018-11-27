@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+
+echo enter the full path name of the file that you want to copy
+read file
+cp $file /lib/modules/`uname -r`
+
+exit 0

@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# ...
+
+echo "Hello $1, how are you today"
+echo " hello $2, how are you"
+echo " hello $10, how are you"
+echo " hello ${10}" 
+echo " hello ${11}"
+shift
+echo hi $1
+echo "\$0 is $0"
