@@ -1,9 +1,7 @@
 #!/bin/bash
 # source
 
-cat << BLAH
-what directory?
-BLAH
+echo which directory do you want to go to?
 
 read DIR
 
