@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo are you good?
+
+read GOOD
+
+case $GOOD in
+yes)
+	echo that's nice
+	;;
+no)
+	echo that's not so nice
+	;;
+*)
+	okay
+	;;
+esac
