@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo are you good?
+
+GOOD=$1
+#read GOOD
+
+#GOOD=$(echo $GOOD | tr [:upper:] [:lower:])
+
+if [ $GOOD = 'yes' ] || [ $GOOD = 'YES' ]
+then
+	echo that\'s nice
+	exit 0
+elif [ $GOOD = 'no' ] || [ $GOOD = 'NO' ]
+then 
+	echo that\'s not so nice
+	exit 0
+fi
+
+echo okay
+exit 0
