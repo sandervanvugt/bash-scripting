@@ -9,4 +9,3 @@ cd $DIR
 pwd
 ls
 
-exit 0

@@ -1,65 +1,66 @@
 #!/bin/bash
 #
-# verified on Fedora Server
+# verified on Fedora 31, 33 and Ubuntu LTS 20.04
 
-if grep -i fedora /etc/redhat-release
-then
-	echo you\'re running Fedora, good, lets continue
-else
-	echo you\'re on the wrong OS
-	echo this script only works on Fedora
-	exit 66
-fi
-
-echo press enter to continue
+echo this script works on Fedora 31, 33 and Ubuntu 20.04
+echo it does NOT currently work on Fedora 32
+echo it requires the machine where you run it to have 6GB of RAM or more
+echo press Enter to continue
 read
 
-# add vbox repo
-rm -f /etc/yum.repos.d/vbox.repo
+# setting MYOS variable
+MYOS=$(hostnamectl | awk '/Operating/ { print $3 }')
+OSVERSION=$(hostnamectl | awk '/Operating/ { print $4 }')
 
-cat << REPO >> /etc/yum.repos.d/vbox.repo
-[virtualbox]
-name=Fedora $releasever - $basearch - VirtualBox
-baseurl=http://download.virtualbox.org/virtualbox/rpm/fedora/\$releasever/\$basearch
-enabled=1
-gpgcheck=0
-repo_gpgcheck=0
-gpgkey=https://www.virtualbox.org/download/oracle_vbox.asc
-REPO
+egrep '^flags.*(vmx|svm)' /proc/cpuinfo || (echo enable CPU virtualization support and try again && exit 9)
 
-dnf clean all
-dnf upgrade
+# debug MYOS variable
+echo MYOS is set to $MYOS
 
-# install vbox
-echo installing virtualbox
-dnf install make perl kernel-devel gcc elfutils-libelf-devel -y
-dnf install VirtualBox-5.2 -y
+#### Fedora config
+if [ $MYOS = "Fedora" ]
+then
+	if [ $OSVERSION = 32 ]
+	then
+		echo Fedora 32 is not currently supported
+		exit 9
+	fi
+	
+	sudo dnf clean all
+	sudo dnf -y upgrade
 
-# configure K8s
-echo installing kubectl
-dnf install kubernetes-client -y
+	# install KVM software
+	sudo dnf install @virtualization -y
+	sudo systemctl enable --now libvirtd
+	sudo usermod -aG libvirt `id -un`
+fi
+
+### Ubuntu config
+if [ $MYOS = "Ubuntu" ]
+then
+	sudo apt-get update -y 
+	sudo apt-get install -y apt-transport-https curl
+	sudo apt-get upgrade -y
+	sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+
+	sudo adduser `id -un` libvirt
+	sudo adduser `id -un` kvm
+fi
+
+# install kubectl
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+# install minikube
 echo downloading minikube, check version
-curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.28.2/minikube-linux-amd64
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 
-chmod +x minikube
-cp minikube /usr/local/bin
+sudo chmod +x minikube
+sudo mv minikube /usr/local/bin
 
-### automatically rebooting to complete procedure
+# start minikube
+minikube start --memory 4096 --vm-driver=kvm2
 
-echo WARNING! This script is going to reboot now to complete the procedure
-echo After reboot, log in as root to perform the final steps.
-echo Press Ctrl-C now to stop this script in case you don\'t want to reboot
-
-cat << REBOOT >> /root/completeme.sh
-vboxconfig
-minikube start
-REBOOT
-
-chmod +x /root/completeme.sh
-cp /etc/profile /etc/profile.bak
-echo /root/completeme.sh >> /etc/profile
-
-rm -f /etc/profile
-mv /etc/profile.bak /etc/profile
-
-reboot
+echo if this script ends with an error, restart the virtual machine
+echo and manually run minikube start --memory 4096 --vm-driver=kvm2
