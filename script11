@@ -1,17 +1,24 @@
 #!/bin/bash
 
-echo are you good?
+COUNTER=$1
+COUNTER=$(( COUNTER * 60 ))
 
-read GOOD
+minusone()({
+	COUNNTER=$(( COUNTER - 1 ))
+	sleep 1
+}
 
-case $GOOD in
-yes)
-	echo that's nice
-	;;
-no)
-	echo that's not so nice
-	;;
-*)
-	okay
-	;;
-esac
+while [ $COUNTER -gt 0 ]
+do
+	echo you still have $COUNTER seconds left
+	minusonne
+done
+
+[ $COUNTER = 0 ] && echo time is up && minusone
+[ $COUNTER = "-1" ] && echo you now are one second late && minusone
+
+while true
+do
+	echo you now are ${COUNTER#-} seconds late
+	minusone
+done
