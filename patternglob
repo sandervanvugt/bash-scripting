@@ -1,0 +1,13 @@
+#!/bin/bash
+shopt -s extglob
+for i in *
+do
+	case $i in
+	!(*.doc|*.txt|*.pdf))
+		echo $i is not a document
+		;;
+	*)
+		echo $i is a document
+	;;
+	esac
+done

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo check for existence of essential variables
+
+: ${HOSTNAME?} ${USER?} 
+echo if you see this step 1 worked
+
+${COW?}
+echo you shouldnt see this

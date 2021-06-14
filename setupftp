@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# due to the location in the course where this script is used it lacks the proper conditional checks
+sudo yum install -y vsftpd lftp
+sudo sed -i -e 's/anonymous_enable=NO/anonymous_enable=YES/' /etc/vsftpd/vsftpd.conf
+
+# again this is not pretty but I don't want to show anything that hasn't been covered yet
+sudo systemctl disable --now vsftpd
+sudo systemctl enable --now vsftpd
+sudo cp /etc/hosts /var/ftp/pub/
+
+# fetching a file wit a here document
+lftp localhost <<ENDSESSION
+ls
+cd pub
+get hosts
+ls
+quit
+ENDSESSION

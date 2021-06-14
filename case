@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo are you good?
+
+read GOOD
+
+GOOD=$(echo $GOOD | tr [:upper:] [:lower:])
+
+case $GOOD in
+yes,oui)
+	echo that's nice
+	;;
+no)
+	echo that's not so nice
+	;;
+*)
+	okay
+	;;
+esac

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# due to the location in the course where this script is used it lacks the proper conditional checks
+sudo yum install -y "$@"
+
+# again this is not pretty but I don't want to show anything that hasn't been covered yet
+sudo systemctl disable --now "$@"
+sudo systemctl enable --now "$@"

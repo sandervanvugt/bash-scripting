@@ -1,0 +1,8 @@
+#!/bin/bash
+echo take one
+echo ${var:-abc}
+echo ${var}
+
+echo take two
+echo ${var:=abc}
+echo ${var}

@@ -5,7 +5,7 @@ echo which directory do you want to go to?
 
 read DIR
 
-cd ${DIR}
+cd $DIR
 pwd
 ls
 
