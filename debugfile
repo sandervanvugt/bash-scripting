@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Use FD 15 to capture the debug stream caused by "set -x":
+exec 15>/tmp/bash-debug.log
+# Tell bash about it  (there's nothing special about 15, its arbitrary)
+export BASH_XTRACEFD=15
+
+# turn on debugging:
+set -x
+
+# run some commands:
+cd /etc
+find 
+echo "that was it"
+
+# Close the debugging:
+set +x
+
+# Close the file descriptor
+exec 15>&-
+
+# See what we got:
+cat /tmp/bash-debug.log

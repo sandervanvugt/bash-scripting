@@ -1,0 +1,29 @@
+#!/bin/bash
+
+ctrlc_count=0
+
+function no_ctrlc()
+{
+        let ctrlc_count++
+        echo
+        if [[ $ctrlc_count == 1 ]]; then
+                echo "Don\'t do that." 
+        elif [[ $ctrlc_count == 2 ]]; then
+                echo "if you\'re sure, do it once more." 
+        else
+                echo "Okay, bye."
+                exit
+        fi
+}
+
+# define the trap that reacts on ctrl-c
+trap no_ctrlc SIGINT
+
+# run the command on something that will be restarted after receiving SIGINT
+# this fails if you do it on while sleep 10000
+while true
+do
+        echo doing nothing for a long time
+        sleep 10000
+done
+

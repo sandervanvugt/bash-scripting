@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PS3='Enter your choice: '
+options=("Option 1" "Option 2" "Option 3" "Quit")
+
+select opt in "${options[@]}"
+do
+	case $opt in
+		"Option 1")
+			echo "you have selected option 1"
+			;;
+		"Option 2")
+			echo "you have selected option 2"
+			;;
+		"Option 3")
+			echo "you have selected $REPLY with is $opt"
+			;;
+		"Quit")
+			break
+			;;
+		*) echo "invalid option $REPLY";;
+	esac
+done

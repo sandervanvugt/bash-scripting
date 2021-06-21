@@ -1,0 +1,42 @@
+#!/bin/bash
+my_array=( a b c )
+
+# print index value 1
+echo ${my_array[1]}
+
+# print all items in the array
+echo ${my_array[@]}
+echo ${my_array[*]}
+
+# print all index values and not their value
+echo ${!my_array[@]}
+
+# print the length of the array
+echo ${#my_array[@]}
+
+# loop over all items in the array; printing all keys as well as all values
+for i in "${!my_array[@]}"
+do
+	echo "$i" "${my_array[$i]}"
+done
+
+# loop on just the values and not the keys
+for i in "${my_array[@]}"
+do
+	echo "$i" 
+done
+
+# adding a value at a specific position
+# using 9 to make sure it is last
+my_array[9]=d
+echo ${my_array[@]}
+echo ${my_array[9]}
+
+# adding items to the end of the array, using the first available index
+my_array+=( e f )
+for i in "${!my_array[@]}"
+do
+        echo "$i" "${my_array[$i]}"
+done
+
+
