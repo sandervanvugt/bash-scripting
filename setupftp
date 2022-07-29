@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# first commit 
 # due to the location in the course where this script is used it lacks the proper conditional checks
 sudo yum install -y vsftpd lftp
 sudo sed -i -e 's/anonymous_enable=NO/anonymous_enable=YES/' /etc/vsftpd/vsftpd.conf
