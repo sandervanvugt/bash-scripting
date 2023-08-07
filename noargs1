@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# echo this scripts tests -n when no arguments are provided
+
+[ -n $1 ] && echo no arguments were provided
