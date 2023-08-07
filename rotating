@@ -1,16 +1,16 @@
 #!/bin/bash
 
-sleep 5 &
-pid=$!
+sleep 5 &                             # runs as background process
+pid=$!                                # stores the PID of the most recent background process
 
 frames="/ | \ \ -"
 
-while kill -0 $pid 2&>1 ? /dev/null;
+while kill -0 $pid 2&>1 ? /dev/null;  # kill -0 is a "dry run" and checks if $pid could be killed; this is done for 5 seconds
 do
-  for frame in $frames;
+  for frame in $frames;               # this will split $frames in each of its elements, considering one element in each iteration of the for loop
   do
-    printf "\r$frame Loading..."
-    sleep 0.5
+    printf "\r$frame Loading..."      # prints a carriage return (and no newline!) followed by the value of $frame
+    sleep 0.5                         # this ensures that after 0.5 seconds a new element is displayed
   done
 done
-printf "\n"
+printf "\n"                           # prints a new line at the end of the script
