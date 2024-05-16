@@ -1,0 +1,223 @@
+[student@localhost ~]$ history
+    1  sudo dnf install -y git
+    2  git clone https://github.com/sandervanvugt/bash-scripting
+    3  cd bash-scripting/
+    4  ls
+    5  cd ..
+    6  git clone https://github.com/sandervanvugt/rhcsa-labs
+    7  cd rhcsa-labs/
+    8  ls
+    9  vim lab123-grade.sh 
+   10  cd ../bash-scripting/
+   11  ls
+   12  vim countdown 
+   13  history
+   14  cat /etc/os-release 
+   15  history
+   16  vim countdown 
+   17  echo $PATH
+   18  env
+   19  history
+   20  vim countdown 
+   21  echo $(( 2 + 2 ))
+   22  echo $(( 2 + 2000 ))
+   23  echo $(( 2 / 2000 ))
+   24  echo $(( 2000 / 3 ))
+   25  echo $(( 666 * 3 ))
+   26  vim countdown 
+   27  ls
+   28  ls &>/dev/null
+   29  echo $
+   30  echo $?
+   31  ls guyfytdtf &>/dev/null
+   32  echo $?
+   33  ls > /dev/null
+   34  ls 2> /dev/null
+   35  ls uyguyguygfuy 2> /dev/null
+   36  ls uyguyguygfuy
+   37  true
+   38  echo $?
+   39  false
+   40  echo $
+   41  echo $?
+   42  false
+   43  echo $?
+   44  vim countdown 
+   45  ./countdown 1
+   46  vim countdown 
+   47  LS
+   48  history
+   49  vim helloworld.sh
+   50  helloworld.sh
+   51  echo $PATH
+   52  ./helloworld.sh
+   53  ls -l
+   54  ls -l helloworld.sh 
+   55  chmod +x helloworld.sh 
+   56  ./helloworld.sh
+   57  vim helloworld.sh 
+   58  ls &>/dev/null
+   59  grep -l '\$&' *
+   60  grep -l '\$\&' *
+   61  ls
+   62  vim script3 
+   63  COLOR=red
+   64  echo COLOR
+   65  echo $COLOR
+   66  echo $COLOR123
+   67  echo ${COLOR}123
+   68  vim script3 
+   69  ./script3
+   70  ls -l script*
+   71  chmod +x script*
+   72  cat script3
+   73  ./script3 a b c d e f g h i j k l m
+   74  vim script4 
+   75  history | grep git
+   76  vim script4 
+   77  ./script4 a b c d
+   78  ls
+   79  ./countdown 12
+   80  date +%d-%m-%y
+   81  vim script6 
+   82  ./script6 /usr/bin/blah
+   83  vim script6 
+   84  ./script6 /usr/bin/blah
+   85  vim script7 
+   86  ls
+   87  vim script10 
+   88  ./script10 5
+   89  ls ; who
+   90  ls ufuyfytfyt ; who
+   91  ls && who
+   92  ls ytfytdfytdf && who
+   93  ls ytfytdfytdf || who
+   94  ls || who
+   95  man test
+   96  [ -f /etc/hosts ] && echo it exists
+   97  [ -f /etc/hosts ] || echo it exists
+   98  [ -f /etcguyuyguyguy ] || echo it not exists
+   99  vim script10 
+  100  vim script7 
+  101  vim script8
+  102  cut -d : -f 1 /etc/passwd
+  103  vim script8
+  104  ./script8 student
+  105  ./script8 bob
+  106  ./script8
+  107  vim script9 
+  108  ./script9 
+  109  echo $?
+  110  ./script9 iuhgiughi
+  111  vim script10 
+  112  ls
+  113  grep elif *
+  114  vim numcheck 
+  115  ./numcheck 
+  116  vim script8 
+  117  [-f /etc/hosts] && echo hello
+  118  [ -f /etc/hosts ] && echo hello
+  119  vim tr.sh
+  120  chmod +x tr.sh
+  121  ./tr.sh
+  122  ./tr.sh student
+  123  ./tr.sh bob
+  124  #tar czvf backup-16-05-2024.tgz /etc
+  125  data +%d-%m-%Y
+  126  date +%d-%m-%Y
+  127  tar czvf backup-$(date +%d-%m-%Y).tgz /etc
+  128  ls -lrt
+  129  history
+  130  uname -r
+  131  cd /usr/lib
+  132  ls
+  133  cd modules
+  134  ls
+  135  cd $(uname -r)
+  136  cd
+  137  cd bash-scripting/
+  138  vim tr.sh 
+  139  ./tr.sh student
+  140  ./tr.sh bob
+  141  vim tr.sh 
+  142  ./tr.sh
+  143  vim script2 
+  144  ./script2 
+  145  pwd
+  146  vim script2 
+  147  source script2 
+  148  pwd
+  149  cd -
+  150  . script2 
+  151  pwd
+  152  cd -
+  153  ls
+  154  vim network 
+  155  vim sourcing
+  156  vim colors
+  157  chmod +x sourcing 
+  158  ./sourcing 
+  159  vim colors
+  160  ./sourcing 
+  161  cat sourcing 
+  162  cd 
+  163  vim .bashrc 
+  164  ls
+  165  cd bash-scripting/
+  166  ls
+  167  vim script11 
+  168  ./script11 1
+  169  bash -x script11 1
+  170  vim script11 
+  171  ./script11 1
+  172  vim script11 
+  173  ./script11 1
+  174  bash -x ./script11 1
+  175  vim script11 
+  176  bash -x ./script11 1
+  177  ls
+  178  vim 9_processmonitor 
+  179  sudo dnf install -y httpd
+  180  sudo systemctl start httpd
+  181  ps aux | grep http
+  182  ps aux | grep bogus
+  183  ps aux | grep bogus | grep -v grep
+  184  ./9_processmonitor 
+  185  ls
+  186  less 1_cpu-hog 
+  187  ls -l 1_cpu-hog 
+  188  echo during break: investigate 1_cpu-hog and tell me what is wrong with it
+  189  vim 1_cpu-hog 
+  190  ./1_cpu-hog 
+  191  vim 1_cpu-hog 
+  192  ./1_cpu-hog 
+  193  vim 1_cpu-hog 
+  194  ./1_cpu-hog 
+  195  ls
+  196  vim setupftp
+  197  sudo ./setupftp
+  198  ls -l hosts
+  199  vim setupftp
+  200  lftp localhost
+  201  ls
+  202  vim kube-setup.sh 
+  203  ls
+  204  cd ..
+  205  git clone https://github.com/sandervanvugt/cka
+  206  cd cka
+  207  ls
+  208  vim setup-container.sh 
+  209  cd ../rhcsa-labs/
+  210  ls
+  211  vim exam-grade.sh 
+  212  echo -e "\033[1mchecking task 1 results\033[0m"
+  213  vim exam-grade.sh 
+  214  vim exam-task14.sh 
+  215  vim exam-task13.sh 
+  216  ./exam-grade.sh 
+  217  vim exam-grade.sh 
+  218  history
+  219  history | grep git
+  220  cd
+  221  history
+
