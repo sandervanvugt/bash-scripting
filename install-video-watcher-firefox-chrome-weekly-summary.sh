@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Video Watcher installer for Ubuntu + Firefox"
+echo "Video Watcher installer for Ubuntu + Firefox/Chrome"
 echo
 
 read -rp "First name: " FIRSTNAME
@@ -37,7 +37,7 @@ source "$HOME/.config/video-watch/config"
 mkdir -p "$REPORT_DIR" "$STATE_DIR"
 
 LAST_STATE="$STATE_DIR/last-state"
-LOGFILE="$STATE_DIR/video-watch.log"
+ACTIVE_PERIOD_FILE="$STATE_DIR/active-period"
 
 csv_escape() {
   local value="$1"
@@ -48,61 +48,116 @@ csv_escape() {
 }
 
 current_period_date() {
-  local dow hour min days
+  local dow hour days
   dow=$(date +%u)      # Monday=1 ... Friday=5 ... Sunday=7
   hour=$(date +%H)
-  min=$(date +%M)
-
   days=$(( (dow + 2) % 7 ))
 
-  if [[ "$dow" -eq 5 ]]; then
-    if (( 10#$hour < 17 )); then
-      days=7
-    fi
+  # Before 17:00 on Friday, continue using the previous Friday's report.
+  if [[ "$dow" -eq 5 ]] && (( 10#$hour < 17 )); then
+    days=7
   fi
 
   date -d "$days days ago" +%F
 }
 
-current_report_files() {
-  local period
-  period="$(current_period_date)"
+set_report_files() {
+  local period="$1"
   TSV="$STATE_DIR/${WATCHER_SLUG}-video-play-report-${period}.tsv"
   CSV="$REPORT_DIR/${WATCHER_SLUG}-video-play-report-${period}.csv"
+  SUMMARY_FILE="$STATE_DIR/${WATCHER_SLUG}-video-play-report-${period}.summary"
 }
 
-ensure_report_exists() {
-  current_report_files
+render_csv_for_period() {
+  local period="$1"
+  set_report_files "$period"
 
-  if [[ ! -f "$TSV" ]]; then
-    : > "$TSV"
-  fi
-
-  if [[ ! -f "$CSV" ]]; then
-    echo "watcher,date,title,minutes" > "$CSV"
-  fi
-}
-
-render_csv() {
   {
     echo "watcher,date,title,minutes"
-    while IFS=$'\t' read -r date watcher title minutes; do
-      [[ -z "${date:-}" ]] && continue
+
+    if [[ -f "$TSV" ]]; then
+      while IFS=$'\t' read -r date watcher title minutes; do
+        [[ -z "${date:-}" ]] && continue
+        printf '%s,%s,%s,%s\n' \
+          "$(csv_escape "$watcher")" \
+          "$(csv_escape "$date")" \
+          "$(csv_escape "$title")" \
+          "$minutes"
+      done < "$TSV"
+    fi
+
+    if [[ -f "$SUMMARY_FILE" ]]; then
+      local total_minutes summary_text
+      total_minutes="$(cut -f1 "$SUMMARY_FILE")"
+      summary_text="$(cut -f2- "$SUMMARY_FILE")"
+
+      # Keep the summary valid CSV while making it easy to spot at the bottom.
       printf '%s,%s,%s,%s\n' \
-        "$(csv_escape "$watcher")" \
-        "$(csv_escape "$date")" \
-        "$(csv_escape "$title")" \
-        "$minutes"
-    done < "$TSV"
+        "$(csv_escape "WEEKLY SUMMARY")" \
+        "$(csv_escape "$period")" \
+        "$(csv_escape "$summary_text")" \
+        "$total_minutes"
+    fi
   } > "$CSV.tmp"
 
   mv "$CSV.tmp" "$CSV"
+}
+
+ensure_report_exists() {
+  local period="$1"
+  set_report_files "$period"
+  [[ -f "$TSV" ]] || : > "$TSV"
+  render_csv_for_period "$period"
+}
+
+finalize_period() {
+  local period="$1"
+  local total_minutes hours minutes summary_text
+
+  [[ -n "$period" ]] || return 0
+  set_report_files "$period"
+
+  # Do this only once, even though the monitor checks every minute.
+  [[ -f "$SUMMARY_FILE" ]] && return 0
+
+  if [[ -f "$TSV" ]]; then
+    total_minutes="$(awk -F '\t' '{ total += $4 } END { print total + 0 }' "$TSV")"
+  else
+    total_minutes=0
+  fi
+
+  hours=$(( total_minutes / 60 ))
+  minutes=$(( total_minutes % 60 ))
+  summary_text="this week you have watched ${hours} hours and ${minutes} minutes"
+
+  printf '%s\t%s\n' "$total_minutes" "$summary_text" > "$SUMMARY_FILE"
+  render_csv_for_period "$period"
+}
+
+prepare_current_period() {
+  local current previous
+  current="$(current_period_date)"
+  previous=""
+
+  if [[ -f "$ACTIVE_PERIOD_FILE" ]]; then
+    previous="$(cat "$ACTIVE_PERIOD_FILE")"
+  fi
+
+  if [[ -n "$previous" && "$previous" != "$current" ]]; then
+    finalize_period "$previous"
+  fi
+
+  printf '%s\n' "$current" > "$ACTIVE_PERIOD_FILE"
+  ensure_report_exists "$current"
+  CURRENT_PERIOD="$current"
 }
 
 add_minute() {
   local date="$1"
   local watcher="$2"
   local title="$3"
+
+  set_report_files "$CURRENT_PERIOD"
 
   awk -F '\t' -v OFS='\t' \
     -v d="$date" \
@@ -121,21 +176,33 @@ add_minute() {
   ' "$TSV" > "$TSV.tmp"
 
   mv "$TSV.tmp" "$TSV"
-  render_csv
+  render_csv_for_period "$CURRENT_PERIOD"
 }
 
-get_firefox_player() {
-  playerctl -l 2>/dev/null | grep -i firefox | head -n 1 || true
+get_browser_player() {
+  local player status
+
+  # Prefer a supported browser session that is actively playing.
+  while IFS= read -r player; do
+    [[ -z "$player" ]] && continue
+    status="$(playerctl -p "$player" status 2>/dev/null || true)"
+    if [[ "$status" == "Playing" ]]; then
+      printf '%s\n' "$player"
+      return 0
+    fi
+  done < <(playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' || true)
+
+  playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' | head -n 1 || true
 }
 
 while true; do
-  ensure_report_exists
+  prepare_current_period
 
-  PLAYER="$(get_firefox_player)"
+  PLAYER="$(get_browser_player)"
 
   if [[ -n "$PLAYER" ]]; then
     STATUS="$(playerctl -p "$PLAYER" status 2>/dev/null || true)"
-    TITLE="$(playerctl -p "$PLAYER" metadata xesam:title 2>/dev/null || echo "Unknown Firefox video")"
+    TITLE="$(playerctl -p "$PLAYER" metadata xesam:title 2>/dev/null || echo "Unknown browser video")"
     POS="$(playerctl -p "$PLAYER" position 2>/dev/null | cut -d. -f1 || echo "")"
 
     TITLE="${TITLE//$'\n'/ }"
@@ -165,13 +232,13 @@ while true; do
 
   sleep 60
 done
-EOF
+EOFEOF
 
 chmod +x "$HOME/.local/bin/video-watch.sh"
 
 cat > "$HOME/.config/systemd/user/video-watch.service" <<EOF
 [Unit]
-Description=Video watch monitor for Firefox
+Description=Video watch monitor for Firefox and Chrome
 
 [Service]
 ExecStart=$HOME/.local/bin/video-watch.sh
@@ -183,7 +250,8 @@ WantedBy=default.target
 EOF
 
 systemctl --user daemon-reload
-systemctl --user enable --now video-watch.service
+systemctl --user enable video-watch.service
+systemctl --user restart video-watch.service
 
 echo
 echo "Trying to enable 24/7 background service..."
@@ -199,6 +267,7 @@ The file name looks like this:
 ${SLUG}-video-play-report-YYYY-MM-DD.csv
 
 A new weekly file is started every Friday at 17:00.
+At rollover, the previous CSV receives a WEEKLY SUMMARY line showing hours and minutes watched.
 EOF
 
 echo
