@@ -7,7 +7,7 @@ if [[ "${EUID}" -eq 0 ]]; then
   exit 1
 fi
 
-echo "Video Watcher installer for Ubuntu + Firefox/Chrome"
+echo "Video Watcher installer v4 for Ubuntu + Firefox/Chrome"
 echo
 
 read -rp "First name: " FIRSTNAME
@@ -201,45 +201,66 @@ add_minute() {
   render_csv_for_period "$CURRENT_PERIOD"
 }
 
-get_browser_player() {
-  local player status
+is_allowed_video_url() {
+  local url="${1,,}"
 
-  # Prefer a supported browser session that is actively playing.
+  # Only record videos opened from these two approved websites.
+  [[ "$url" =~ ^https?://([a-z0-9-]+\.)*learning\.oreilly\.com([/:?#]|$) ]] ||
+    [[ "$url" =~ ^https?://event\.on24\.com([/:?#]|$) ]]
+}
+
+get_supported_browser_player() {
+  local player status url
+
+  # Check every active Firefox/Chrome/Chromium media session. This prevents an
+  # unrelated playing tab from hiding a valid O'Reilly or ON24 video.
   while IFS= read -r player; do
     [[ -z "$player" ]] && continue
+
     status="$(playerctl -p "$player" status 2>/dev/null || true)"
-    if [[ "$status" == "Playing" ]]; then
+    [[ "$status" == "Playing" ]] || continue
+
+    url="$(playerctl -p "$player" metadata xesam:url 2>/dev/null || true)"
+    url="${url//$'\n'/ }"
+    url="${url//$'\r'/ }"
+
+    if is_allowed_video_url "$url"; then
       printf '%s\n' "$player"
       return 0
     fi
   done < <(playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' || true)
 
-  playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' | head -n 1 || true
+  return 0
 }
 
 while true; do
   prepare_current_period
 
-  PLAYER="$(get_browser_player)"
+  PLAYER="$(get_supported_browser_player)"
 
   if [[ -n "$PLAYER" ]]; then
     STATUS="$(playerctl -p "$PLAYER" status 2>/dev/null || true)"
     TITLE="$(playerctl -p "$PLAYER" metadata xesam:title 2>/dev/null || echo "Unknown browser video")"
+    URL="$(playerctl -p "$PLAYER" metadata xesam:url 2>/dev/null || true)"
     POS="$(playerctl -p "$PLAYER" position 2>/dev/null | cut -d. -f1 || echo "")"
 
     TITLE="${TITLE//$'\n'/ }"
     TITLE="${TITLE//$'\r'/ }"
+    URL="${URL//$'\n'/ }"
+    URL="${URL//$'\r'/ }"
 
     LAST_TITLE=""
+    LAST_URL=""
     LAST_POS=""
 
     if [[ -f "$LAST_STATE" ]]; then
       LAST_TITLE="$(grep '^title=' "$LAST_STATE" 2>/dev/null | cut -d= -f2- || true)"
+      LAST_URL="$(grep '^url=' "$LAST_STATE" 2>/dev/null | cut -d= -f2- || true)"
       LAST_POS="$(grep '^pos=' "$LAST_STATE" 2>/dev/null | cut -d= -f2- || true)"
     fi
 
     if [[ "$STATUS" == "Playing" && "$POS" =~ ^[0-9]+$ ]]; then
-      if [[ "$TITLE" != "$LAST_TITLE" ]]; then
+      if [[ "$TITLE" != "$LAST_TITLE" || "$URL" != "$LAST_URL" ]]; then
         add_minute "$(date +%F)" "$WATCHER_NAME" "$TITLE"
       elif [[ "$LAST_POS" =~ ^[0-9]+$ && "$POS" -gt "$LAST_POS" ]]; then
         add_minute "$(date +%F)" "$WATCHER_NAME" "$TITLE"
@@ -248,6 +269,7 @@ while true; do
 
     {
       echo "title=$TITLE"
+      echo "url=$URL"
       echo "pos=$POS"
     } > "$LAST_STATE"
   fi
