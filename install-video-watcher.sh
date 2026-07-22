@@ -13,6 +13,36 @@ echo
 read -rp "First name: " FIRSTNAME
 read -rp "Last name: " LASTNAME
 
+echo
+echo "Choose the ONE browser that you will use for watched videos:"
+echo
+echo "  1) Firefox"
+echo "  2) Chrome or Chromium"
+echo
+echo "IMPORTANT:"
+echo "All videos played in the selected browser will be logged."
+echo "The other browser will not be monitored at all."
+echo
+
+while true; do
+  read -rp "Enter 1 for Firefox or 2 for Chrome/Chromium: " BROWSER_CHOICE
+  case "$BROWSER_CHOICE" in
+    1)
+      BROWSER_NAME="Firefox"
+      BROWSER_PATTERN="firefox"
+      break
+      ;;
+    2)
+      BROWSER_NAME="Chrome/Chromium"
+      BROWSER_PATTERN="chrome|chromium"
+      break
+      ;;
+    *)
+      echo "Invalid choice. Please enter only 1 or 2."
+      ;;
+  esac
+done
+
 SLUG="$(echo "${FIRSTNAME}-${LASTNAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')"
 WATCHER_NAME="${FIRSTNAME} ${LASTNAME}"
 
@@ -27,7 +57,9 @@ rm -f "$HOME/.config/systemd/user/video-watch.service"
 rm -f "$HOME/.local/bin/video-watch.sh"
 rm -f "$HOME/.config/video-watch/config"
 
-# Preserve existing CSV reports and internal weekly data so an upgrade does not lose viewing history.
+# Delete previous reports and internal state to protect the watcher's privacy.
+rm -rf "$HOME/video-watch-reports"
+rm -rf "$HOME/.local/state/video-watch"
 
 systemctl --user daemon-reload 2>/dev/null || true
 systemctl --user reset-failed video-watch.service 2>/dev/null || true
@@ -48,6 +80,8 @@ WATCHER_NAME="$WATCHER_NAME"
 WATCHER_SLUG="$SLUG"
 REPORT_DIR="$HOME/video-watch-reports"
 STATE_DIR="$HOME/.local/state/video-watch"
+BROWSER_NAME="$BROWSER_NAME"
+BROWSER_PATTERN="$BROWSER_PATTERN"
 EOF
 
 cat > "$HOME/.local/bin/video-watch.sh" <<'EOF'
@@ -204,7 +238,7 @@ add_minute() {
 get_browser_player() {
   local player status
 
-  # Prefer a supported browser session that is actively playing.
+  # Monitor only the browser selected during installation.
   while IFS= read -r player; do
     [[ -z "$player" ]] && continue
     status="$(playerctl -p "$player" status 2>/dev/null || true)"
@@ -212,9 +246,9 @@ get_browser_player() {
       printf '%s\n' "$player"
       return 0
     fi
-  done < <(playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' || true)
+  done < <(playerctl -l 2>/dev/null | grep -Ei "$BROWSER_PATTERN" || true)
 
-  playerctl -l 2>/dev/null | grep -Ei 'firefox|chrome|chromium' | head -n 1 || true
+  playerctl -l 2>/dev/null | grep -Ei "$BROWSER_PATTERN" | head -n 1 || true
 }
 
 while true; do
@@ -260,7 +294,7 @@ chmod +x "$HOME/.local/bin/video-watch.sh"
 
 cat > "$HOME/.config/systemd/user/video-watch.service" <<EOF
 [Unit]
-Description=Video watch monitor for Firefox and Chrome
+Description=Video watch monitor for the selected browser
 
 [Service]
 ExecStart=$HOME/.local/bin/video-watch.sh
@@ -288,6 +322,11 @@ echo "Trying to enable 24/7 background service..."
 sudo loginctl enable-linger "$USER" || true
 
 cat > "$HOME/video-watch-reports/README.txt" <<EOF
+Selected monitored browser: $BROWSER_NAME
+
+All videos played in this browser are logged.
+Other browsers are not monitored.
+
 Every week, email the newest CSV file from this folder:
 
 $HOME/video-watch-reports
@@ -302,6 +341,9 @@ EOF
 
 echo
 echo "Installation complete. The video-watch.service is active and running."
+echo "Monitored browser: $BROWSER_NAME"
+echo "All videos played in this browser will be logged."
+echo "Other browsers will not be monitored."
 echo
 echo "Reports are stored in:"
 echo "$HOME/video-watch-reports"
