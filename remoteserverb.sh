@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # generating SSH key for local user
-[ -f /etc/.ssh/id_rsa ] || ssh-keygen
+[ -f $HOME/.ssh/id_rsa ] || ssh-keygen
 
 # scanning hosts on $NETWORK
 echo enter the IP address of the network that you want to scan for available hosts
